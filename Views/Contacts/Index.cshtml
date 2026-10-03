@@ -1,0 +1,49 @@
+﻿@model IEnumerable<Contact>
+<h1>Index (@Model.Count()) </h1>
+
+<form method="get" asp-controller="Contacts" asp-action="Index" class="row g-2 mb-3">
+    <div class="col-sm-8 col-md-6 col-lg-4">
+        <input type="text" name="q" value="@((string?)ViewBag.Query)" class="form-control" placeholder="Kişi ara..." />
+    </div>
+    <div class="col-auto ms-auto">
+    <a asp-controller="Contacts" asp-action="Create" class="btn btn-success">Yeni Kişi</a>
+    </div>
+</form>
+
+
+
+<div class="table-responsive">
+    @if (Model.Any())
+    {
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th class="text-end">Detay</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Contact contact in Model)
+                {
+                    <tr>
+                        <td>@contact.FirstName @contact.LastName</td>
+                        <td>@contact.Email</td>
+                        <td>@contact.Phone</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-info" asp-action="Details" asp-controller="Contacts" asp-route-id="@contact.Id">Detay</a>
+                        </td>
+                        <td>
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-controller="Contacts" asp-route-id="@contact.Id">Düzenle</a>
+                            <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-controller="Contacts" asp-route-id="@contact.Id">Sil</a>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }else
+    {
+        <p>Henüz kayıtlı kişi yok.</p>
+    }
+</div>
