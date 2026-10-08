@@ -1,4 +1,6 @@
+using ContactApp.Repositories;
 using ContactApp.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,9 +8,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // DI -- Register
-builder
-    .Services
-    .AddSingleton<IContactRepository, InMemoryContactRepository>();
+
+builder.Services.AddDbContext<ContactDbContext>(options =>
+{
+    var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? "Data Source = App_Data/contacts.db";
+    options.UseSqlite(connStr);
+});
+
+builder.Services.AddScoped<IContactRepository, EfContactRepository>();
+
 
 
 var app = builder.Build();
@@ -33,5 +42,14 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+using (var scope = app.Services.CreateScope())
+{
+    var dataDir = Path.Combine(app.Environment.ContentRootPath, "App_Data");
+    Directory.CreateDirectory(dataDir);
+
+    var db = scope.ServiceProvider.GetRequiredService<ContactDbContext>();
+    db.Database.Migrate();
+    DbSeeder.Seed(db);
+};
 
 app.Run();
