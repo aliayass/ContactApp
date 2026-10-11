@@ -18,7 +18,13 @@ builder.Services.AddDbContext<ContactDbContext>(options =>
 
 builder.Services.AddScoped<IContactRepository, EfContactRepository>();
 
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"]
+    ?? "https://localhost:7250/";
 
+builder.Services.AddHttpClient<INewsService, NewsService>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
 
 var app = builder.Build();
 
