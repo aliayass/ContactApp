@@ -1,10 +1,13 @@
 ﻿using ContactApp.Models;
+using ContactApp.Models.Identity;
+using Microsoft.AspNetCore.Identity;
 
 namespace ContactApp.Repositories
 {
     public static class DbSeeder
     {
-        public static void Seed(ContactDbContext db)
+        public static async Task Seed
+            (ApplicationDbContext db, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager)
         {
             if (db.Contacts.Any())
             {
@@ -22,6 +25,32 @@ namespace ContactApp.Repositories
         };
             db.Contacts.AddRange(seed);
             db.SaveChanges();
+
+            //Seed Role
+            if (await roleManager.FindByNameAsync("Admin") == null)
+            {
+                await roleManager.CreateAsync(new ApplicationRole
+                {
+                    Name = "Admin",
+                    NormalizedName = "ADMIN"
+                });
+            }
+
+            //Seed Admin User
+            if (await userManager.FindByNameAsync("admin") == null)
+            {
+                var adminUser = new ApplicationUser()
+                {
+                    UserName = "admin",
+                    Email = "admin@gmail.com",
+                    EmailConfirmed = true,
+                };
+                var result = await userManager.CreateAsync(adminUser, "65admin65");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                }
+            }
         }
     }
 }

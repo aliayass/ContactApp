@@ -7,9 +7,9 @@ namespace ContactApp.Repositories;
 
 public class EfContactRepository : IContactRepository
 {
-    private readonly ContactDbContext _db;
+    private readonly ApplicationDbContext _db;
 
-    public EfContactRepository(ContactDbContext db)
+    public EfContactRepository(ApplicationDbContext db)
     {
         _db = db;
     }

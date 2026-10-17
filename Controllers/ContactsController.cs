@@ -1,5 +1,6 @@
 ﻿using ContactApp.Models;
 using ContactApp.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ContactApp.Controllers;
@@ -15,7 +16,7 @@ public class ContactsController : Controller
         _logger = logger;
     }
 
-    [HttpGet("")]
+    //[HttpGet("")]
     public IActionResult Index(string q)
     {
         var items = _repo.GetAll();
@@ -50,7 +51,8 @@ public class ContactsController : Controller
         return View("NotFound");
     }
 
-    [HttpGet]
+    [HttpGet("/contacts/create")]
+    [Authorize(Roles ="Admin")]
     public IActionResult Create()
     {
         ViewData["Title"] = "Kişi Ekle";
@@ -58,6 +60,7 @@ public class ContactsController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public IActionResult Create(Contact contact)
     {
@@ -74,6 +77,7 @@ public class ContactsController : Controller
 
 
     [HttpGet("Contacts/Edit/{id}")]
+    [Authorize(Roles = "Admin")]
     public IActionResult Edit(int id)
     {
         var contact = _repo.GetById(id);
@@ -82,7 +86,9 @@ public class ContactsController : Controller
         ViewData["Title"] = "Kişi Görüntüleme";
         return View(contact);
     }
+
     [HttpPost("Contacts/Edit/{id}")]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public IActionResult Edit(int id, Contact contact)
     {
@@ -101,7 +107,9 @@ public class ContactsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+
     [HttpGet("Contacts/Delete/{id}")]
+    [Authorize(Roles = "Admin")]
     public IActionResult Delete(int id)
     {
         var contact = _repo.GetById(id);
@@ -110,7 +118,10 @@ public class ContactsController : Controller
         ViewData["Title"] = "Silme Onayı";
         return View(contact);
     }
+
+
     [HttpPost("Contacts/Delete/{id}")]
+    [Authorize(Roles = "Admin")]
     [ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public IActionResult DeleteConfirmed(int id, Contact contact)

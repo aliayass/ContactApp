@@ -1,5 +1,7 @@
+using ContactApp.Models.Identity;
 using ContactApp.Repositories;
 using ContactApp.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,14 +11,48 @@ builder.Services.AddControllersWithViews();
 
 // DI -- Register
 
-builder.Services.AddDbContext<ContactDbContext>(options =>
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Data Source = App_Data/contacts.db";
     options.UseSqlite(connStr);
 });
 
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+{
+    options.Password.RequiredLength = 6;
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+
+    options.User.RequireUniqueEmail = true; //
+    options.SignIn.RequireConfirmedEmail = false; // giriş yaptıktan sonra e-mail doğrulama zorunluluğu
+
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
+
+
+
 builder.Services.AddScoped<IContactRepository, EfContactRepository>();
+
+
+// 
+builder
+    .Services
+    .AddScoped<IAuthService, AuthManager>();
+
+builder
+    .Services
+    .AddScoped<IRoleService, RoleManagerService>();
+
 
 var apiBaseUrl = builder.Configuration["ApiBaseUrl"]
     ?? "https://localhost:7250/";
@@ -39,6 +75,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
@@ -53,9 +90,21 @@ using (var scope = app.Services.CreateScope())
     var dataDir = Path.Combine(app.Environment.ContentRootPath, "App_Data");
     Directory.CreateDirectory(dataDir);
 
-    var db = scope.ServiceProvider.GetRequiredService<ContactDbContext>();
+    var db = scope
+            .ServiceProvider
+            .GetRequiredService<ApplicationDbContext>();
     db.Database.Migrate();
-    DbSeeder.Seed(db);
+
+    //kullanıcı işlemleri
+    var userManager = scope
+        .ServiceProvider
+        .GetRequiredService<UserManager<ApplicationUser>>();
+
+    var roleManager = scope
+        .ServiceProvider
+        .GetRequiredService<RoleManager<ApplicationRole>>();
+
+    DbSeeder.Seed(db, userManager, roleManager);
 };
 
 app.Run();
